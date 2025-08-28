@@ -1,9 +1,14 @@
 # 🛠️ MechanicShop System
-
-![MechanicShop Banner](https://t3.ftcdn.net/jpg/04/36/49/44/360_F_436494409_m2NAPydjqYtrh3lzqde8HKbw7jkUEwSq.jpg)
-
 Welcome to the MechanicShop System! This project is a modern web application designed to streamline the operations of a mechanic workshop. Built with cutting-edge .NET technologies, it leverages Docker and Docker Compose for a robust, portable, and scalable development and deployment environment. 🚀
 
+![MechanicShop Banner](https://t3.ftcdn.net/jpg/04/36/49/44/360_F_436494409_m2NAPydjqYtrh3lzqde8HKbw7jkUEwSq.jpg)
+<p align="center">
+  <img src="https://img.shields.io/badge/.NET-9.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white"/>
+  <img src="https://img.shields.io/badge/ASP.NET-Core-5C2D91?style=for-the-badge&logo=dotnet&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white"/>
+</p>
 ## ✨ Features
 
 - **Comprehensive Workshop Management**: Manage work orders, customer data, and repair tasks efficiently.
