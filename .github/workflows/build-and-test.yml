@@ -27,7 +27,8 @@ jobs:
           -p 1433:1433 \
           --name sqlserver \
           mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
-        sleep 20
+        echo "Waiting for SQL Server to be ready..."
+        sleep 30
         docker ps -a
 
     - name: Restore dependencies
@@ -38,5 +39,5 @@ jobs:
 
     - name: Run tests
       env:
-        ConnectionStrings__DefaultConnection: "Server=localhost,1433;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+        ConnectionStrings__DefaultConnection: "Server=localhost,1433;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False"
       run: dotnet test --configuration Release --no-build --verbosity normal
