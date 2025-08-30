@@ -3,44 +3,40 @@ name: Build and Test
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
 
-      # تأكد إن Docker شغال
-      - name: Verify Docker
-        run: |
-          sudo systemctl start docker
-          docker info
+    - name: Run MSSQL container
+      run: |
+        docker run -d \
+          -e "ACCEPT_EULA=Y" \
+          -e "MSSQL_SA_PASSWORD=YourStrong!Passw0rd" \
+          -p 1433:1433 \
+          --name sqlserver \
+          mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+        sleep 20
+        docker ps -a
 
-      - name: Restore dependencies
-        run: dotnet restore
+    - name: Restore dependencies
+      run: dotnet restore
 
-      - name: Build solution
-        run: dotnet build --configuration Release --no-restore
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
 
-      - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal
-
-      - name: Show debug logs (if fail)
-        if: failure()
-        run: |
-          docker ps -a
-          for cid in $(docker ps -q); do
-            echo "=== Logs for container $cid ==="
-            docker logs --tail 200 $cid || true
-          done
+    - name: Run tests
+      env:
+        ConnectionStrings__DefaultConnection: "Server=localhost,1433;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+      run: dotnet test --configuration Release --no-build --verbosity normal
