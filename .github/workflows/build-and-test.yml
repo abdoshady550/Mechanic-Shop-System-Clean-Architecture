@@ -10,21 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd="pg_isready -U test"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -34,7 +19,7 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
-    - name: Ensure Docker is running
+    - name: Enable Docker service
       run: |
         sudo systemctl start docker
         docker info
@@ -48,6 +33,16 @@ jobs:
     - name: Run tests
       run: dotnet test --configuration Release --no-build --verbosity normal
 
+    # Debugging steps (only run if tests fail)
     - name: Show running containers (debug)
-      if: always()
+      if: failure()
       run: docker ps -a
+
+    - name: Show container logs (last 200 lines)
+      if: failure()
+      run: |
+        for cid in $(docker ps -q); do
+          echo "=== Logs for container $cid ==="
+          docker logs --tail 200 $cid
+          echo ""
+        done
