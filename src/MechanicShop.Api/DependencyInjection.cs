@@ -180,11 +180,19 @@ public static class DependencyInjection
 
         services.AddCors(options => options.AddPolicy(
             appSettings.CorsPolicyName,
-            policy => policy
-                .WithOrigins(appSettings.AllowedOrigins!)
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()));
+            policy =>
+            {
+                var origins = appSettings.AllowedOrigins?.ToList() ?? new List<string>();
+
+                // ???? localhost ?? origin ?????
+                origins.Add("http://localhost:5173");
+
+                policy
+                    .WithOrigins(origins.ToArray())
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            }));
 
         return services;
     }
