@@ -10,21 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd="pg_isready -U test"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -34,6 +19,18 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
+    # 🐳 Enable Docker (GitHub runner عنده Docker installed, محتاج نتاكد إنه شغال)
+    - name: Set up Docker
+      run: |
+        sudo systemctl start docker
+        docker info
+
+    # (اختياري) لو بتحتاج صلاحيات root في Testcontainers
+    - name: Allow runner user to access Docker
+      run: |
+        sudo usermod -aG docker $USER
+        newgrp docker
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -41,4 +38,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Run tests
+      env:
+        DOTNET_RUNNING_IN_CONTAINER: false
+        DOTNET_USE_POLLING_FILE_WATCHER: 1
       run: dotnet test --configuration Release --no-build --verbosity normal
