@@ -12,20 +12,6 @@ jobs:
     permissions:
       contents: read
 
-    services:
-      docker:
-        image: docker:26-dind
-        options: >-
-          --privileged
-        ports:
-          - 2375:2375
-        env:
-          DOCKER_TLS_CERTDIR: ""
-
-    env:
-      DOCKER_HOST: tcp://localhost:2375
-      DOCKER_DRIVER: overlay2
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,8 +21,11 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      # تأكد إن Docker شغال
       - name: Verify Docker
-        run: docker info
+        run: |
+          sudo systemctl start docker
+          docker info
 
       - name: Restore dependencies
         run: dotnet restore
