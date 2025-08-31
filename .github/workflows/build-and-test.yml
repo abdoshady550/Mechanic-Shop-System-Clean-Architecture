@@ -1,5 +1,4 @@
 name: Build and Test
-
 on:
   push:
     branches:
@@ -11,21 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     services:
-      docker:
-        image: docker:26-dind
-        options: >-
-          --privileged
-        ports:
-          - 2375:2375
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
         env:
-          DOCKER_TLS_CERTDIR: ""
-
-    env:
-      DOCKER_HOST: tcp://localhost:2375
-      DOCKER_DRIVER: overlay2
-
+          ACCEPT_EULA: Y
+          SA_PASSWORD: YourStrong@Password1
+        ports:
+          - 1433:1433
+        options: >-
+          --memory=3g
+          --health-cmd="/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Password1 -Q 'SELECT 1'" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,8 +33,13 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Verify Docker
-        run: docker info
+      - name: Wait for SQL Server to be ready
+        run: |
+          for i in {1..30}; do
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Password1 -Q "SELECT 1" && break
+            echo "SQL Server not ready yet..."
+            sleep 5
+          done
 
       - name: Restore dependencies
         run: dotnet restore
