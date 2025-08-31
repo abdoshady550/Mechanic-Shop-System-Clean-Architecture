@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white"/>
   <img src="https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white"/>
 </p>
-Welcome to the MechanicShop System! This project is a modern web application designed to streamline the operations of a mechanic workshop. Built with cutting-edge .NET technologies, it leverages Docker and Docker Compose for a robust, portable, and scalable development and deployment environment. 🚀
+Welcome to the MechanicShop System! This project is a modern web application designed to streamline the operations of a mechanic workshop: manage customers and vehicles, schedule and relocate work orders by spot and time, track states, define repair tasks and labor, and handle invoicing (issue, fetch, PDF download, mark paid) with role-based access. 🚀
 
 ## ✨ Features
 
