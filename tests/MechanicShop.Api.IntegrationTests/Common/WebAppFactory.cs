@@ -1,11 +1,7 @@
-﻿using DotNet.Testcontainers.Builders;
-
-using MechanicShop.Application.Common.Interfaces;
+﻿using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Infrastructure.BackgroundJobs;
 using MechanicShop.Infrastructure.Data;
-
 using MediatR;
-
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -14,9 +10,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-
 using Testcontainers.MsSql;
-
 using Xunit;
 
 namespace MechanicShop.Api.IntegrationTests.Common;
@@ -24,15 +18,7 @@ namespace MechanicShop.Api.IntegrationTests.Common;
 public class WebAppFactory : WebApplicationFactory<IAssemblyMarker>, IAsyncLifetime
 {
     private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2022-CU13-ubuntu-22.04") // Use specific working version
-        .WithPassword("YourStrong@Password123!") // Use stronger password
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(1433))
-        .WithStartupCallback(async (container, ct) =>
-        {
-            // Wait additional time for SQL Server to be fully ready
-            await Task.Delay(TimeSpan.FromSeconds(10), ct);
-        })
-        .Build();
+    .Build();
 
     public AppHttpClient CreateAppHttpClient()
     {
@@ -53,21 +39,17 @@ public class WebAppFactory : WebApplicationFactory<IAssemblyMarker>, IAsyncLifet
         return serviceScope.ServiceProvider.GetRequiredService<IAppDbContext>();
     }
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        await _dbContainer.StartAsync();
+        return _dbContainer.StartAsync()
+          .ContinueWith(async _ =>
+          {
+              using var scope = Services.CreateScope();
+              var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // Additional wait to ensure SQL Server is fully ready
-        await Task.Delay(TimeSpan.FromSeconds(5));
-
-        using var scope = Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        // Ensure database is created and ready
-        await context.Database.EnsureCreatedAsync();
-
-        context.WorkOrders.RemoveRange(context.WorkOrders);
-        await context.SaveChangesAsync();
+              context.WorkOrders.RemoveRange(context.WorkOrders);
+              await context.SaveChangesAsync();
+          }).Unwrap();
     }
 
     public new Task DisposeAsync() => _dbContainer.StopAsync();

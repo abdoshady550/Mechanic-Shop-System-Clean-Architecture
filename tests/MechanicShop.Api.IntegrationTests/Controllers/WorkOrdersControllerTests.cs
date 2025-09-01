@@ -17,11 +17,11 @@ using Xunit;
 namespace MechanicShop.Api.IntegrationTests.Controllers;
 
 [Collection(WebAppFactoryCollection.CollectionName)]
-public class WorkOrdersControllerTests(InMemoryWebAppFactory webAppFactory)
+public class WorkOrdersControllerTests(WebAppFactory webAppFactory)
 {
     private readonly AppHttpClient _client = webAppFactory.CreateAppHttpClient();
     private readonly IAppDbContext _context = webAppFactory.CreateAppDbContext();
-    // ... rest of your tests
+
     [Fact]
     public async Task GetWorkOrders_WithValidPagination_ShouldReturnPaginatedList()
     {
