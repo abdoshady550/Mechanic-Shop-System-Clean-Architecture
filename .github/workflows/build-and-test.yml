@@ -19,6 +19,16 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
+    # Add Docker setup to ensure we have a compatible version
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Configure system for SQL Server containers
+    - name: Configure system for SQL Server
+      run: |
+        sudo sysctl -w vm.max_map_count=262144
+        sudo sysctl -w fs.file-max=65536
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -27,6 +37,9 @@ jobs:
 
     - name: Run tests
       run: dotnet test --configuration Release --no-build --verbosity normal
+      env:
+        # Increase timeout for container startup
+        TESTCONTAINERS_TIMEOUT: 300
     - name: Show debug logs (if fail)
       if: failure()
       run: |
