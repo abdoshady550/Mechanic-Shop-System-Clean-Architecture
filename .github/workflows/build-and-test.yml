@@ -1,3 +1,6 @@
+# GitHub Actions Configuration - Fixed Version
+# ??????? ?????? ??? ????? Testcontainers ?? SQL Server
+
 name: Build and Test
 
 on:
@@ -9,42 +12,81 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
+    
+    # ????? ??????? ???? ???????????
+    permissions:
+      contents: read
+    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
-
-    # Add Docker setup to ensure we have a compatible version
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    # Configure system for SQL Server containers
-    - name: Configure system for SQL Server
-      run: |
-        sudo sysctl -w vm.max_map_count=262144
-        sudo sysctl -w fs.file-max=65536
-
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build solution
-      run: dotnet build --configuration Release --no-restore
-
-    - name: Run tests
-      run: dotnet test --configuration Release --no-build --verbosity normal
-      env:
-        # Increase timeout for container startup
-        TESTCONTAINERS_TIMEOUT: 300
-    - name: Show debug logs (if fail)
-      if: failure()
-      run: |
-        docker ps -a
-        for cid in $(docker ps -q); do
-          echo "=== Logs for container $cid ==="
-          docker logs --tail 200 $cid || true
-        done
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      # ????? ?????? ?? SQL Server ?? ??????? ?????
+      - name: Configure system for SQL Server and Docker
+        run: |
+          # ????? ??????? ??????? ????????
+          sudo sysctl -w vm.max_map_count=262144
+          sudo sysctl -w fs.file-max=65536
+          sudo sysctl -w vm.overcommit_memory=1
+          
+          # ????? ??????? Docker
+          sudo systemctl restart docker
+          
+          # ????? ??????? ?????? ???????
+          echo "Available memory:"
+          free -h
+          echo "Docker info:"
+          docker info | grep -E "(Memory|CPUs)"
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore
+        
+      # ????? ?????????? ?? ??????? ?????? ???????
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
+        env:
+          # ????? Ryuk ????? ????? ????????? ?? CI
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+          
+          # ????? timeout ???????????
+          TESTCONTAINERS_TIMEOUT: 300
+          
+          # ????? ?????? Testcontainers ????????
+          TESTCONTAINERS_CHECKS_DISABLE: "true"
+          
+          # ????? ???? Docker
+          DOCKER_BUILDKIT: "1"
+          
+          # ????? ??????? ??????? ??????????
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+          DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+          
+      # ????? ?????? ??????? ?? ???? ?????
+      - name: Show debug logs (if fail)
+        if: failure()
+        run: |
+          echo "=== Docker containers ==="
+          docker ps -a
+          
+          echo "=== Memory usage ==="
+          free -h
+          
+          echo "=== Docker logs ==="
+          for cid in $(docker ps -q -a); do
+            echo "=== Logs for container $cid ==="
+            docker logs --tail 200 $cid || true
+          done
+          
+          echo "=== System logs ==="
+          sudo journalctl --no-pager --lines=50 -u docker
