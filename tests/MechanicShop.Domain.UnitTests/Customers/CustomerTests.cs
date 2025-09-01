@@ -1,6 +1,7 @@
 ﻿using MechanicShop.Domain.Common.Results;
 using MechanicShop.Domain.Customers;
 using MechanicShop.Domain.Customers.Vehicles;
+using MechanicShop.Domain.RepairTasks.Parts;
 using MechanicShop.Tests.Common.Customers;
 
 using Xunit;

@@ -1,4 +1,6 @@
-﻿using MechanicShop.Domain.RepairTasks;
+﻿using System.IO;
+
+using MechanicShop.Domain.RepairTasks;
 using MechanicShop.Domain.RepairTasks.Enums;
 using MechanicShop.Domain.RepairTasks.Parts;
 using MechanicShop.Tests.Common.RepaireTasks;
