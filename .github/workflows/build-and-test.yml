@@ -60,10 +60,11 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: "true"
           
           # ????? timeout ???????????
-          TESTCONTAINERS_TIMEOUT: 300
+          TESTCONTAINERS_TIMEOUT: 600
           
           # ????? ?????? Testcontainers ????????
           TESTCONTAINERS_CHECKS_DISABLE: "true"
+          TESTCONTAINERS_WAIT_FOR_SQLSERVER: "true"
           
           # ????? ???? Docker
           DOCKER_BUILDKIT: "1"
