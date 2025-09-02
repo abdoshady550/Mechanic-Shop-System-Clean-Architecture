@@ -1,7 +1,9 @@
 ﻿using MechanicShop.Application.Common.Interfaces;
 using MechanicShop.Infrastructure.BackgroundJobs;
 using MechanicShop.Infrastructure.Data;
+
 using MediatR;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -10,7 +12,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+
 using Testcontainers.MsSql;
+
 using Xunit;
 
 namespace MechanicShop.Api.IntegrationTests.Common;
@@ -18,7 +22,7 @@ namespace MechanicShop.Api.IntegrationTests.Common;
 public class WebAppFactory : WebApplicationFactory<IAssemblyMarker>, IAsyncLifetime
 {
     private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
-    .Build();
+        .WithPassword("Password").Build();
 
     public AppHttpClient CreateAppHttpClient()
     {
