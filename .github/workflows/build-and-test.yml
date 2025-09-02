@@ -1,100 +1,28 @@
 name: Build and Test
-
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: read
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-          
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        
-      - name: Configure system for SQL Server and Docker
-        run: |
-          # Configure system limits for SQL Server
-          sudo sysctl -w vm.max_map_count=262144
-          sudo sysctl -w fs.file-max=65536
-          sudo sysctl -w vm.overcommit_memory=1
-          
-          # Restart Docker to apply changes
-          sudo systemctl restart docker
-          
-          # Wait for Docker to be ready
-          sleep 5
-          
-          # Show system resources
-          echo "Available memory:"
-          free -h
-          echo "Docker info:"
-          docker info | grep -E "(Memory|CPUs)" || true
-          
-      - name: Restore dependencies
-        run: dotnet restore
-        
-      - name: Build solution
-        run: dotnet build --configuration Release --no-restore
-        
-      - name: Run tests with extended timeout
-        run: dotnet test --configuration Release --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" -- RunConfiguration.TestSessionTimeout=1200000
-        env:
-          # Disable Ryuk for CI environments
-          TESTCONTAINERS_RYUK_DISABLED: "true"
-          
-          # Increase container startup timeout
-          TESTCONTAINERS_TIMEOUT: "900"
-          
-          # Configure Testcontainers for CI
-          TESTCONTAINERS_CHECKS_DISABLE: "true"
-          
-          # Docker configuration
-          DOCKER_BUILDKIT: "1"
-          
-          # .NET configuration
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
-          DOTNET_CLI_TELEMETRY_OPTOUT: "true"
-          DOTNET_NOLOGO: "true"
-          
-          # Test configuration
-          ASPNETCORE_ENVIRONMENT: "Test"
-          
-      - name: Show debug logs on failure
-        if: failure()
-        run: |
-          echo "=== Docker containers ==="
-          docker ps -a
-          
-          echo "=== Memory usage ==="
-          free -h
-          
-          echo "=== Docker system info ==="
-          docker system df
-          
-          echo "=== Recent Docker logs ==="
-          for cid in $(docker ps -q -a); do
-            echo "=== Logs for container $cid ==="
-            docker logs --tail 100 $cid 2>&1 || true
-            echo ""
-          done
-          
-          echo "=== Test Results ==="
-          find . -name "*.trx" -exec cat {} \; || true
-          
-          echo "=== System resources ==="
-          df -h
-          ps aux --sort=-%mem | head -20
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
