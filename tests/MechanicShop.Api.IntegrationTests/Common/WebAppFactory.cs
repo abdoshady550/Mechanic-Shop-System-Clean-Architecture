@@ -21,8 +21,7 @@ namespace MechanicShop.Api.IntegrationTests.Common;
 
 public class WebAppFactory : WebApplicationFactory<IAssemblyMarker>, IAsyncLifetime
 {
-    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
-    .WithPassword("YourStrong@Password1").Build();
+    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder().Build();
 
     public AppHttpClient CreateAppHttpClient()
     {
