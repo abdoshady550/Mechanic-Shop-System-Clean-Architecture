@@ -1,6 +1,3 @@
-# GitHub Actions Configuration - Fixed Version
-# ??????? ?????? ??? ????? Testcontainers ?? SQL Server
-
 name: Build and Test
 
 on:
@@ -13,7 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     
-    # ????? ??????? ???? ???????????
     permissions:
       contents: read
     
@@ -29,22 +25,24 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
-      # ????? ?????? ?? SQL Server ?? ??????? ?????
       - name: Configure system for SQL Server and Docker
         run: |
-          # ????? ??????? ??????? ????????
+          # Configure system limits for SQL Server
           sudo sysctl -w vm.max_map_count=262144
           sudo sysctl -w fs.file-max=65536
           sudo sysctl -w vm.overcommit_memory=1
           
-          # ????? ??????? Docker
+          # Restart Docker to apply changes
           sudo systemctl restart docker
           
-          # ????? ??????? ?????? ???????
+          # Wait for Docker to be ready
+          sleep 5
+          
+          # Show system resources
           echo "Available memory:"
           free -h
           echo "Docker info:"
-          docker info | grep -E "(Memory|CPUs)"
+          docker info | grep -E "(Memory|CPUs)" || true
           
       - name: Restore dependencies
         run: dotnet restore
@@ -52,29 +50,30 @@ jobs:
       - name: Build solution
         run: dotnet build --configuration Release --no-restore
         
-      # ????? ?????????? ?? ??????? ?????? ???????
-      - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal
+      - name: Run tests with extended timeout
+        run: dotnet test --configuration Release --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage" -- RunConfiguration.TestSessionTimeout=1200000
         env:
-          # ????? Ryuk ????? ????? ????????? ?? CI
+          # Disable Ryuk for CI environments
           TESTCONTAINERS_RYUK_DISABLED: "true"
           
-          # ????? timeout ???????????
-          TESTCONTAINERS_TIMEOUT: 600
+          # Increase container startup timeout
+          TESTCONTAINERS_TIMEOUT: "900"
           
-          # ????? ?????? Testcontainers ????????
+          # Configure Testcontainers for CI
           TESTCONTAINERS_CHECKS_DISABLE: "true"
-          TESTCONTAINERS_WAIT_FOR_SQLSERVER: "true"
           
-          # ????? ???? Docker
+          # Docker configuration
           DOCKER_BUILDKIT: "1"
           
-          # ????? ??????? ??????? ??????????
+          # .NET configuration
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
           DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+          DOTNET_NOLOGO: "true"
           
-      # ????? ?????? ??????? ?? ???? ?????
-      - name: Show debug logs (if fail)
+          # Test configuration
+          ASPNETCORE_ENVIRONMENT: "Test"
+          
+      - name: Show debug logs on failure
         if: failure()
         run: |
           echo "=== Docker containers ==="
@@ -83,11 +82,19 @@ jobs:
           echo "=== Memory usage ==="
           free -h
           
-          echo "=== Docker logs ==="
+          echo "=== Docker system info ==="
+          docker system df
+          
+          echo "=== Recent Docker logs ==="
           for cid in $(docker ps -q -a); do
             echo "=== Logs for container $cid ==="
-            docker logs --tail 200 $cid || true
+            docker logs --tail 100 $cid 2>&1 || true
+            echo ""
           done
           
-          echo "=== System logs ==="
-          sudo journalctl --no-pager --lines=50 -u docker
+          echo "=== Test Results ==="
+          find . -name "*.trx" -exec cat {} \; || true
+          
+          echo "=== System resources ==="
+          df -h
+          ps aux --sort=-%mem | head -20
